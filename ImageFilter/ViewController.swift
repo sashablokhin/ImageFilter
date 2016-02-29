@@ -21,19 +21,25 @@ class ViewController: UIViewController {
             return
         }
         
+        let openGLContext = EAGLContext(API: .OpenGLES2)
+        let context = CIContext(EAGLContext: openGLContext)
+        
         let coreImage = CIImage(CGImage: cgimg)
         
-        let filter = CIFilter(name: "CISepiaTone")
-        filter?.setValue(coreImage, forKey: kCIInputImageKey)
-        filter?.setValue(0.5, forKey: kCIInputIntensityKey)
+        let sepiaFilter = CIFilter(name: "CISepiaTone")
+        sepiaFilter?.setValue(coreImage, forKey: kCIInputImageKey)
+        sepiaFilter?.setValue(1, forKey: kCIInputIntensityKey)
         
-        if let output = filter?.valueForKey(kCIOutputImageKey) as? CIImage {
-            let filteredImage = UIImage(CIImage: output)
-            imageView?.image = filteredImage
-        }
+        if let sepiaOutput = sepiaFilter?.valueForKey(kCIOutputImageKey) as? CIImage {
+            let exposureFilter = CIFilter(name: "CIExposureAdjust")
+            exposureFilter?.setValue(sepiaOutput, forKey: kCIInputImageKey)
+            exposureFilter?.setValue(1, forKey: kCIInputEVKey)
             
-        else {
-            print("image filtering failed")
+            if let exposureOutput = exposureFilter?.valueForKey(kCIOutputImageKey) as? CIImage {
+                let output = context.createCGImage(exposureOutput, fromRect: exposureOutput.extent)
+                let result = UIImage(CGImage: output)
+                imageView?.image = result
+            }
         }
     }
 
